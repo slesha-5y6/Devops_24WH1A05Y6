@@ -1,0 +1,51 @@
+cd /path/to/your/local/repo/clone
+
+cat > html-pod-pvc.yml << 'EOF'
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: html-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: html-pod
+  labels:
+    app: html-app
+spec:
+  containers:
+    - name: html-container
+      image: nginx:latest
+      ports:
+        - containerPort: 80
+      volumeMounts:
+        - name: html-storage
+          mountPath: /usr/share/nginx/html
+  volumes:
+    - name: html-storage
+      persistentVolumeClaim:
+        claimName: html-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: html-service
+spec:
+  type: NodePort
+  selector:
+    app: html-app
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30002
+EOF
+
+git add html-pod-pvc.yml
+git commit -m "Add k8s pod, PVC, and service manifest"
+git push origin main
